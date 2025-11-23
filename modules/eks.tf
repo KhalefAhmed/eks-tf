@@ -1,8 +1,8 @@
 resource "aws_eks_cluster" "eks" {
-  count = var.is_eks_enabled ? 1 : 0
+  count    = var.is_eks_enabled ? 1 : 0
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role[count.index].arn
-  version = var.eks_version
+  version  = var.eks_version
 
   vpc_config {
     subnet_ids              = [aws_subnet.private_subnet[0].id, aws_subnet.private_subnet[1].id, aws_subnet.private_subnet[2].id]
@@ -58,7 +58,7 @@ resource "aws_eks_node_group" "ondemand_node" {
   }
   tags_all = {
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    "name" = "${var.cluster_name}-ondemand-nodes"
+    "name"                                      = "${var.cluster_name}-ondemand-nodes"
   }
 
   depends_on = [aws_eks_cluster.eks]
@@ -85,11 +85,11 @@ resource "aws_eks_node_group" "spot_node" {
     max_unavailable = 1
   }
   tags = {
-    "Name" = "${var.cluster-name}-spot-nodes"
+    "Name" = "${var.cluster_name}-spot-nodes"
   }
   tags_all = {
-    "kubernetes.io/cluster/${var.cluster-name}" = "owned"
-    "Name" = "${var.cluster-name}-ondemand-nodes"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "Name"                                      = "${var.cluster_name}-ondemand-nodes"
   }
   labels = {
     type      = "spot"

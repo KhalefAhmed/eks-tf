@@ -7,9 +7,6 @@ resource "random_integer" "random_suffix" {
   max = 9999
 }
 
-variable "is_eks_role_enabled" {
-  default = ""
-}
 resource "aws_iam_role" "eks_cluster_role" {
   count = var.is_eks_role_enabled ? 1 : 0
   name  = "${local.cluster_name}-eks-cluster-role-${random_integer.random_suffix.result}"
@@ -78,7 +75,7 @@ resource "aws_iam_role_policy_attachment" "eks-AmazonEKSEBSCSI_DriverPolicy_atta
 }
 
 resource "aws_iam_role" "eks_oidc_role" {
-  count = var.is_eks_role_enabled ? 1 : 0
-    name  = "${local.cluster_name}-eks-oidc-role-${random_integer.random_suffix.result}"
+  count              = var.is_eks_role_enabled ? 1 : 0
+  name               = "${local.cluster_name}-eks-oidc-role-${random_integer.random_suffix.result}"
   assume_role_policy = data.aws_iam_policy.document.eks_oidc_assume_role_policy.json
 }

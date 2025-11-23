@@ -4,73 +4,47 @@ variable "cluster_name" {
   description = "The name of the EKS cluster"
 }
 
-variable "vpc_cidr" {
-  default = ""
-}
+variable "vpc_cidr" {}
 
-variable "environment" {
-  default = ""
-}
+variable "environment" {}
 
-variable "public_subnet_count" {
-  default = ""
-}
+variable "public_subnet_count" {}
 
-variable "private_subnet_count" {
-  default = ""
-}
+variable "private_subnet_count" {}
 
-variable "availability_zones" {
-  default = ""
-}
+variable "availability_zones" {}
 
-variable "private_availability_zones" {
-  default = ""
-}
+variable "private_availability_zones" {}
 
-variable "public_subnet_cidrs" {
-  default = ""
-}
+variable "public_subnet_cidrs" {}
 
-variable "private_subnet_cidrs" {
-  default = ""
-}
+variable "private_subnet_cidrs" {}
 
-variable "public_subnet_name" {
-  default = ""
-}
+variable "public_subnet_name" {}
 
-variable "private_subnet_name" {
-  default = ""
-}
+variable "private_subnet_name" {}
 
 
 variable "endpoint_private_access" {}
 
 variable "endpoint_public_access" {}
 
-variable "eks_version" {
-  default = ""
-}
+variable "eks_version" {}
 
-variable "public_route_table_name" {
-  default = ""
-}
+variable "public_route_table_name" {}
 
-variable "private_route_table_name" {
-  default = ""
-}
+variable "private_route_table_name" {}
 
-variable "nat_gateway_name" {
-  default = ""
-}
+variable "nat_gateway_name" {}
 
-variable "eks_cluster_sg_name" {
-  default = ""
-}
+variable "eks_cluster_sg_name" {}
 
 variable "is_eks_enabled" {
-  default = ""
+  type = bool
+}
+
+variable "is_eks_role_enabled" {
+  type = bool
 }
 
 variable "addons" {
@@ -80,22 +54,12 @@ variable "addons" {
   }))
 }
 
-variable "desired_capacity_on_demand" {
-  default = ""
-}
+variable "desired_capacity_on_demand" {}
 
-variable "min_capacity_on_demand" {
-  default = ""
-}
+variable "min_capacity_on_demand" {}
 
-variable "max_capacity_on_demand" {
-  default = ""
-}
+variable "max_capacity_on_demand" {}
 
-variable "ondemand_instance_types" {
-  default = ""
-}
+variable "ondemand_instance_types" {}
 
-variable "spot_instance_types" {
-  default = ""
-}
+variable "spot_instance_types" {}

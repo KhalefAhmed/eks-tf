@@ -57,7 +57,7 @@ resource "aws_subnet" "private_subnet" {
     "kubernetes.io/role/internal-elb"             = "1"
   }
 
-  depends_on = [aws_vpc.vpc,]
+  depends_on = [aws_vpc.vpc, ]
 }
 
 resource "aws_route_table" "public_rt" {
@@ -126,26 +126,26 @@ resource "aws_route_table_association" "private_association" {
 
 
 resource "aws_security_group" "eks_cluster_sg" {
-    name        =  var.eks_cluster_sg_name
-    description = "Allow 433 from jump server"
-    vpc_id      = aws_vpc.vpc.id
+  name        = var.eks_cluster_sg_name
+  description = "Allow 433 from jump server"
+  vpc_id      = aws_vpc.vpc.id
 
-    ingress {
-        from_port   = 443
-        to_port     = 443
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-  egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-    tags = {
-        name = "${local.cluster_name}-eks-cluster-sg"
-        env  = var.environment
-    }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    name = "${local.cluster_name}-eks-cluster-sg"
+    env  = var.environment
+  }
 }
