@@ -1,140 +1,159 @@
 locals {
-  cluster_name = var.cluster_name
+  cluster-name = var.cluster-name
 }
 
 resource "aws_vpc" "vpc" {
-  cidr_block           = var.vpc_cidr
+  cidr_block           = var.cidr-block
   instance_tenancy     = "default"
   enable_dns_hostnames = true
   enable_dns_support   = true
+
   tags = {
-    name = "${local.cluster_name}-vpc"
-    env  = var.environment
+    Name = var.vpc-name
+    Env  = var.env
+
   }
 }
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
+
   tags = {
-    name                                          = "${local.cluster_name}-igw"
-    env                                           = var.environment
-    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
-    "kubernetes.io/role/elb"                      = "1"
+    Name                                          = var.igw-name
+    env                                           = var.env
+    "kubernetes.io/cluster/${local.cluster-name}" = "owned"
   }
 
   depends_on = [aws_vpc.vpc]
 }
 
-
-resource "aws_subnet" "public_subnet" {
+resource "aws_subnet" "public-subnet" {
+  count                   = var.pub-subnet-count
   vpc_id                  = aws_vpc.vpc.id
-  count                   = var.public_subnet_count
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.public_availability_zones[count.index]
+  cidr_block              = element(var.pub-cidr-block, count.index)
+  availability_zone       = element(var.pub-availability-zone, count.index)
   map_public_ip_on_launch = true
 
   tags = {
-    name                                          = var.public_subnet_name
-    env                                           = var.environment
-    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+    Name                                          = "${var.pub-sub-name}-${count.index + 1}"
+    Env                                           = var.env
+    "kubernetes.io/cluster/${local.cluster-name}" = "owned"
     "kubernetes.io/role/elb"                      = "1"
   }
 
-  depends_on = [aws_vpc.vpc]
+  depends_on = [aws_vpc.vpc,
+  ]
 }
 
-resource "aws_subnet" "private_subnet" {
-  count                   = var.private_subnet_count
+resource "aws_subnet" "private-subnet" {
+  count                   = var.pri-subnet-count
   vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = var.private_subnet_cidrs[count.index]
-  availability_zone       = var.private_availability_zones[count.index]
+  cidr_block              = element(var.pri-cidr-block, count.index)
+  availability_zone       = element(var.pri-availability-zone, count.index)
   map_public_ip_on_launch = false
 
   tags = {
-    name                                          = "${var.private_subnet_name}-${count.index + 1}"
-    env                                           = var.environment
-    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+    Name                                          = "${var.pri-sub-name}-${count.index + 1}"
+    Env                                           = var.env
+    "kubernetes.io/cluster/${local.cluster-name}" = "owned"
     "kubernetes.io/role/internal-elb"             = "1"
   }
 
-  depends_on = [aws_vpc.vpc, ]
+  depends_on = [aws_vpc.vpc,
+  ]
 }
 
-resource "aws_route_table" "public_rt" {
+
+resource "aws_route_table" "public-rt" {
   vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-
-    tags = {
-      name = var.public_route_table_name
-      env  = var.environment
-    }
   }
+
+  tags = {
+    Name = var.public-rt-name
+    env  = var.env
+  }
+
+  depends_on = [aws_vpc.vpc
+  ]
 }
 
-resource "aws_route_table_association" "public" {
-  count          = var.public_subnet_count
-  route_table_id = aws_route_table.public_rt.id
-  subnet_id      = aws_subnet.public_subnet[count.index].id
+resource "aws_route_table_association" "name" {
+  count          = 3
+  route_table_id = aws_route_table.public-rt.id
+  subnet_id      = aws_subnet.public-subnet[count.index].id
 
-  depends_on = [aws_vpc.vpc, aws_subnet.public_subnet]
+  depends_on = [aws_vpc.vpc,
+    aws_subnet.public-subnet
+  ]
 }
 
-resource "aws_eip" "ngw_eip" {
+resource "aws_eip" "ngw-eip" {
   domain = "vpc"
-  tags = {
-    name = var.nat_gateway_name
-  }
-  depends_on = [aws_vpc.vpc]
-}
-
-resource "aws_nat_gateway" "natgw" {
-  allocation_id = aws_eip.ngw_eip.id
-  subnet_id     = aws_subnet.public_subnet[0].id
 
   tags = {
-    name = var.nat_gateway_name
+    Name = var.eip-name
   }
+
+  depends_on = [aws_vpc.vpc
+  ]
 
 }
 
-resource "aws_route_table" "private_rt" {
+resource "aws_nat_gateway" "ngw" {
+  allocation_id = aws_eip.ngw-eip.id
+  subnet_id     = aws_subnet.public-subnet[0].id
+
+  tags = {
+    Name = var.ngw-name
+  }
+
+  depends_on = [aws_vpc.vpc,
+    aws_eip.ngw-eip
+  ]
+}
+
+resource "aws_route_table" "private-rt" {
   vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.natgw.id
+    nat_gateway_id = aws_nat_gateway.ngw.id
   }
 
   tags = {
-    name = var.private_route_table_name
-    env  = var.environment
+    Name = var.private-rt-name
+    env  = var.env
   }
 
-  depends_on = [aws_vpc.vpc]
+  depends_on = [aws_vpc.vpc,
+  ]
 }
 
-resource "aws_route_table_association" "private_association" {
-  count          = var.public_subnet_count
-  subnet_id      = aws_subnet.public_subnet[count.index].id
-  route_table_id = aws_route_table.private_rt.id
+resource "aws_route_table_association" "private-rt-association" {
+  count          = 3
+  route_table_id = aws_route_table.private-rt.id
+  subnet_id      = aws_subnet.private-subnet[count.index].id
 
-  depends_on = [aws_vpc.vpc, aws_subnet.public_subnet]
+  depends_on = [aws_vpc.vpc,
+    aws_subnet.private-subnet
+  ]
 }
 
+resource "aws_security_group" "eks-cluster-sg" {
+  name        = var.eks-sg
+  description = "Allow 443 from Jump Server only"
 
-resource "aws_security_group" "eks_cluster_sg" {
-  name        = var.eks_cluster_sg_name
-  description = "Allow 433 from jump server"
-  vpc_id      = aws_vpc.vpc.id
+  vpc_id = aws_vpc.vpc.id
 
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] // It should be specific IP range
   }
 
   egress {
@@ -145,7 +164,6 @@ resource "aws_security_group" "eks_cluster_sg" {
   }
 
   tags = {
-    name = "${local.cluster_name}-eks-cluster-sg"
-    env  = var.environment
+    Name = var.eks-sg
   }
 }
