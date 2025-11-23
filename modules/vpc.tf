@@ -1,15 +1,6 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "5.99.1"
-    }
-  }
-}
 locals {
   cluster_name = var.cluster_name
 }
-
 
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr
@@ -50,6 +41,23 @@ resource "aws_subnet" "public_subnet" {
   }
 
   depends_on = [aws_vpc.vpc]
+}
+
+resource "aws_subnet" "private_subnet" {
+  count                   = var.private_subnet_count
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.private_subnet_cidrs[count.index]
+  availability_zone       = var.private_availability_zones[count.index]
+  map_public_ip_on_launch = false
+
+  tags = {
+    name                                          = "${var.private_subnet_name}-${count.index + 1}"
+    env                                           = var.environment
+    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+    "kubernetes.io/role/internal-elb"             = "1"
+  }
+
+  depends_on = [aws_vpc.vpc,]
 }
 
 resource "aws_route_table" "public_rt" {
