@@ -74,8 +74,30 @@ resource "aws_iam_role_policy_attachment" "eks-AmazonEKSEBSCSI_DriverPolicy_atta
   role       = aws_iam_role.eks_cluster_role[count.index].name
 }
 
-resource "aws_iam_role" "eks_oidc_role" {
-  count              = var.is_eks_role_enabled ? 1 : 0
-  name               = "${local.cluster_name}-eks-oidc-role-${random_integer.random_suffix.result}"
-  assume_role_policy = data.aws_iam_policy.document.eks_oidc_assume_role_policy.json
+## OIDC Role and Policy for Service Accounts
+resource "aws_iam_role" "eks_oidc" {
+  assume_role_policy = data.aws_iam_policy_document.eks_oidc_assume_role_policy.json
+  name               = "eks-oidc"
+}
+
+resource "aws_iam_policy" "eks_oidc_policy" {
+  name = "test-policy"
+
+  policy = jsonencode({
+    Statement = [{
+      Action = [
+        "s3:ListAllMyBuckets",
+        "s3:GetBucketLocation",
+        "*"
+      ]
+      Effect   = "Allow"
+      Resource = "*"
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_oidc_policy_attach" {
+  role       = aws_iam_role.eks_oidc.name
+  policy_arn = aws_iam_policy.eks_oidc_policy.arn
 }
