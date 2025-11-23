@@ -12,13 +12,21 @@ variable "public_subnet_count" {}
 
 variable "private_subnet_count" {}
 
-variable "availability_zones" {}
+variable "public_availability_zones" {
+  type = list(string)
+}
 
-variable "private_availability_zones" {}
+variable "private_availability_zones" {
+    type = list(string)
+}
 
-variable "public_subnet_cidrs" {}
+variable "public_subnet_cidrs" {
+    type = list(string)
+}
 
-variable "private_subnet_cidrs" {}
+variable "private_subnet_cidrs" {
+    type = list(string)
+}
 
 variable "public_subnet_name" {}
 
